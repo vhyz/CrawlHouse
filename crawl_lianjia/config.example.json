@@ -4,5 +4,8 @@
   "community_table":"gz_community",
   "mysql_name":"root",
   "mysql_password":"",
-  "database_name":""
+  "database_name":"",
+  "use_email":true,
+  "email_name":"",
+  "email_pw":""
 }

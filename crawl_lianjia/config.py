@@ -12,3 +12,6 @@ with open('config.json')as f:
     MYSQL_NAME = j['mysql_name']
     MYSQL_PASSWORD = j['mysql_password']
     DATABASE_NAME = j['database_name']
+    USE_REPORT = j['use_email']
+    EMAIL_NAME = j['email_name']
+    EMAIL_PW = j['email_pw']

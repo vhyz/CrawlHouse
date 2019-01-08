@@ -117,7 +117,6 @@ def crawl(url):
 
         community_url = soup.find('div', class_='communityName').find('a')['href']
         community_id = community_url[8:len(community_url)-1]
-        print(community_id)
         res_list[15] = community_id
 
         r = requests.get(config.BASE_URL + community_url, headers=headers)
@@ -266,7 +265,7 @@ class OutThread(threading.Thread):
                                 community_id VARCHAR(20) )
                               """.format(config.HOUSE_TABLE)
         create_community_table_sql = """CREATE TABLE IF NOT EXISTS {}(
-                                id VARCHAR(20),
+                                id VARCHAR(20) PRIMARY KEY,
                                 favor_count VARCHAR(10),
                                 unit_price VARCHAR(20),
                                 info TEXT )
@@ -282,11 +281,10 @@ class OutThread(threading.Thread):
             except:
                 self.conn.close()
                 break
-            print(item)
             c = self.conn.cursor()
             house_sql = 'INSERT INTO {} VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'.format(config.HOUSE_TABLE)
             c.execute(house_sql,item[:16])
-            community_sql = 'INSERT INTO {} VALUES (%s,%s,%s,%s)'.format(config.COMMUNITY_TABLE)
+            community_sql = 'INSERT IGNORE INTO {} VALUES (%s,%s,%s,%s)'.format(config.COMMUNITY_TABLE)
             c.execute(community_sql,item[15:])
             self.conn.commit()
         print('所有连接已爬取完')
