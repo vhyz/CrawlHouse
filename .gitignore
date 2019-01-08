@@ -1,0 +1,9 @@
+# crawl_lianjia
+crawl_lianjia/url_data.db
+crawl_lianjia/img_data.db
+crawl_lianjia/config.json
+__pycache__
+.idea
+crawl_lianjia/img
+crawl_lianjia/log.txt
+crawl_lianjia/test.py

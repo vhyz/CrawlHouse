@@ -1,0 +1,8 @@
+{
+  "url":"https://gz.lianjia.com/ershoufang/",
+  "house_table":"gz_ershoufang",
+  "community_table":"gz_community",
+  "mysql_name":"root",
+  "mysql_password":"",
+  "database_name":""
+}
