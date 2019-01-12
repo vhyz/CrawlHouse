@@ -7,5 +7,6 @@
   "database_name":"",
   "use_email":true,
   "email_name":"",
-  "email_pw":""
+  "email_pw":"",
+  "email_receiver":""
 }

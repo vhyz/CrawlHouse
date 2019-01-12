@@ -2,8 +2,8 @@ import smtplib
 from email.mime.text import MIMEText
 import threading
 import time
-import sqlite3
 import config
+import data_process
 
 
 class RepoterThread(threading.Thread):
@@ -13,8 +13,9 @@ class RepoterThread(threading.Thread):
         self.mail_host = "smtp.163.com"  # SMTP服务器
         self.mail_user = config.EMAIL_NAME  # 用户名
         self.mail_pass = config.EMAIL_PW  # 授权密码，非登录密码
-        self.sender = 'python_reporter@163.com'
-        self.receivers = ['32564682@qq.com']
+        self.sender = config.EMAIL_NAME
+        self.receivers = []
+        self.receivers.append(config.EMAIL_RECEIVER)
 
     def sendEmail(self, title, content):
         message = MIMEText(content, 'plain', 'utf-8')  # 内容, 格式, 编码
@@ -29,26 +30,17 @@ class RepoterThread(threading.Thread):
         except smtplib.SMTPException as e:
             print(e)
 
-    def count(self, db, table):
-        try:
-            conn = sqlite3.connect(db)
-            c = conn.cursor()
-            c.execute('select count(*) from ' + table)
-            f = c.fetchone()
-            conn.close()
-            return f[0]
-        except:
-            return 0
-
     def run(self):
         if not config.USE_REPORT:
             return
         while True:
             content = '程序运行正常\n'
-            n = 0
-            url_count = self.count('url_data.db','url')
-            img_count = self.count('img_data.db','img')
+            url_count = data_process.house_url_count()
+            img_count = data_process.img_url_count()
+            house_count,community_count = data_process.house_and_community_count()
             content += 'url数量:' + str(url_count) + '\n'
             content += 'img数量:' + str(img_count) + '\n'
+            content += 'house数量' + str(house_count) + '\n'
+            content += 'community数量' + str(community_count) + '\n'
             self.sendEmail('程序运行报告', content)
             time.sleep(1800)

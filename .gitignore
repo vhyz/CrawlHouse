@@ -7,3 +7,4 @@ __pycache__
 crawl_lianjia/img
 crawl_lianjia/log.txt
 crawl_lianjia/test.py
+crawl_lianjia/out_data.py

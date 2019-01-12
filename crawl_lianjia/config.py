@@ -15,3 +15,4 @@ with open('config.json')as f:
     USE_REPORT = j['use_email']
     EMAIL_NAME = j['email_name']
     EMAIL_PW = j['email_pw']
+    EMAIL_RECEIVER = j['email_receiver']

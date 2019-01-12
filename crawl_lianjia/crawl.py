@@ -29,31 +29,39 @@ def get_url_list(url):
 def crawl(url):
     res_list = ['' for i in range(19)]
     house_pic_list = list()
+
+    # 房子链接id
+    id = url[len(config.URL):len(url) - 5]
+    res_list[0] = id
+    res_list[14] = '0'
     try:
         r = requests.get(url, headers=headers)
-        id = url[len(config.URL):len(url) - 5]
-        res_list[0] = id
         soup = BeautifulSoup(r.text, 'lxml')
 
+        # 房子标题
         title = soup.find('h1', class_='main').text
         res_list[1] = title
 
+        # 房子总价
         price_tag = soup.find('div',class_='price')
         price = price_tag.find('span', class_='total').text + price_tag.find('span',class_='unit').text
         res_list[2] = price
 
+        # 房子关注人数
         fav_count = soup.find('span', id='favCount').text
-
         res_list[3] = fav_count
 
+        # 单位价格
         unit_price = soup.find('span', class_='unitPriceValue').text
         res_list[4] = unit_price
 
+        # 小区名字
         community_name = soup.find('div', class_='communityName').find('a').text
-        res_list[5] = community_name
+        res_list[15] = community_name
 
+        # 所处地区
         area_name = soup.find('div', class_='areaName').find('span', class_='info').text
-        res_list[6] = area_name
+        res_list[5] = area_name
 
         info = soup.find('div', class_='introContent')
         base_info_soup = info.find('div', class_='base').find('div', class_='content').ul.find_all('li')
@@ -66,16 +74,20 @@ def crawl(url):
         for item in sell_info_soup:
             span_list = item.find_all('span')
             sell_info += span_list[0].text + ' ' + span_list[1].text + '\n'
-        res_list[7] = base_info
-        res_list[8] = sell_info
+        # 基础属性
+        res_list[6] = base_info
+        # 交易属性
+        res_list[7] = sell_info
 
+        # 房子特色
         intro_info_list = soup.find('div', class_='showbasemore').find_all('div', recursive=False)
         intro_info = ''
-        for i in range(len(intro_info_list) - 2):
+        for i in range(len(intro_info_list)):
             div = intro_info_list[i].find_all('div')
             intro_info += div[0].text + ' ' + div[1].text + '\n'
-        res_list[9] = intro_info
+        res_list[8] = intro_info
 
+        # 布局
         layout_des = ''
         try:
             layout = soup.find('div', id='layout').div.find('div', class_='content')
@@ -84,24 +96,32 @@ def crawl(url):
                 for div in row.find_all('div'):
                     layout_des += div.text + ' '
                 layout_des += '\n'
+        except:
+            pass
+        res_list[9] = layout_des
+
+        # 图片
+        try:
             house_pic_tag_list = soup.find('div', class_='housePic').find_all('img')
             for tag in house_pic_tag_list:
                 house_pic_list.append(data_process.Img(tag['src'], id, tag['alt']))
         except:
             pass
-        res_list[10] = layout_des
 
+        # 代看人数
         r1 = requests.get(config.URL + 'houseseerecord', params={'id': id}, headers=headers)
         j = json.loads(r1.text)
         count_7 = j['data']['thisWeek']
         count_30 = j['data']['totalCnt']
-        res_list[11] = count_7
-        res_list[12] = count_30
+        res_list[10] = count_7
+        res_list[11] = count_30
 
+        # 经纬度
         jingweidu = re.findall("resblockPosition:'(.*?)'", r.text)
         jingweidu = jingweidu[0]
-        res_list[13] = jingweidu
+        res_list[12] = jingweidu
 
+        # 经纪人评论
         comment_data = {}
         comment_data['isContent'] = 1
         comment_data['page'] = 1
@@ -110,14 +130,16 @@ def crawl(url):
         comment_r = requests.get(config.URL + 'showcomment', headers=headers, params=comment_data)
         comment_dict = json.loads(comment_r.text)
         comment = ''
-        if not comment_dict['data'] is None:
+        if len(comment_dict['data']) != 0:
             for agent in comment_dict['data']['agentList']:
-                comment += agent['comment']
-        res_list[14] = comment
+                comment += agent['comment'] + '\n'
+        res_list[13] = comment
+
+        # 小区id
 
         community_url = soup.find('div', class_='communityName').find('a')['href']
         community_id = community_url[8:len(community_url)-1]
-        res_list[15] = community_id
+        res_list[14] = community_id
 
         r = requests.get(config.BASE_URL + community_url, headers=headers)
         soup = BeautifulSoup(r.text, 'lxml')
@@ -127,21 +149,24 @@ def crawl(url):
         except:
             pass
 
+        # 小区关注人数
         follow_count = soup.find('div', class_='detailFollowedNum').span.text
         res_list[16] = follow_count
 
         info = soup.find('div', class_='xiaoquDescribe')
         price = info.find('div').div.span.text
+        # 小区品滚价格
         res_list[17] = price
         community_info_tag_list = info.find('div', class_='xiaoquInfo').find_all('div')
         community_base_info = ''
         for tag in community_info_tag_list:
             community_base_info += tag.contents[0].text + ' ' + tag.contents[1].text + '\n'
+        # 小区信息
         res_list[18] = community_base_info
 
 
     except:
-        pass
+        logging.error(traceback.print_exc())
     finally:
         return res_list, house_pic_list
 
@@ -212,6 +237,7 @@ class CrawlHouseThread(threading.Thread):
             url = data_process.get_house_url()
             if url == '':
                 break
+            print(url)
             res, img_list = crawl(url)
             self.out_queue.put(res)
             if len(img_list) != 0:
@@ -245,48 +271,20 @@ class OutThread(threading.Thread):
         threading.Thread.__init__(self)
         self.data_queue = data_queue
         self.conn = pymysql.connect("localhost",config.MYSQL_NAME,config.MYSQL_PASSWORD,config.DATABASE_NAME)
-        c = self.conn.cursor()
-        create_house_table_sql = """CREATE TABLE IF NOT EXISTS {}(
-                                id VARCHAR(20),
-                                title TEXT,
-                                price VARCHAR(20),
-                                favor_count VARCHAR(10),
-                                unit_price VARCHAR(20),
-                                community_name VARCHAR(20),
-                                location VARCHAR(50),
-                                base_info TEXT,
-                                sell_info TEXT,
-                                intro TEXT,
-                                layout TEXT,
-                                count_7 VARCHAR(10),
-                                count_30 VARCHAR(10),
-                                jingweidu VARCHAR(30),
-                                comment TEXT,
-                                community_id VARCHAR(20) )
-                              """.format(config.HOUSE_TABLE)
-        create_community_table_sql = """CREATE TABLE IF NOT EXISTS {}(
-                                id VARCHAR(20) PRIMARY KEY,
-                                favor_count VARCHAR(10),
-                                unit_price VARCHAR(20),
-                                info TEXT )
-                              """.format(config.COMMUNITY_TABLE)
-        c.execute(create_community_table_sql)
-        c.execute(create_house_table_sql)
-        self.conn.commit()
 
     def run(self):
         while True:
             try:
                 item = self.data_queue.get(timeout=30)
             except:
-                self.conn.close()
                 break
             c = self.conn.cursor()
-            house_sql = 'INSERT INTO {} VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'.format(config.HOUSE_TABLE)
-            c.execute(house_sql,item[:16])
-            community_sql = 'INSERT IGNORE INTO {} VALUES (%s,%s,%s,%s)'.format(config.COMMUNITY_TABLE)
-            c.execute(community_sql,item[15:])
+            house_sql = 'INSERT IGNORE INTO {} VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'.format(config.HOUSE_TABLE)
+            c.execute(house_sql,item[:15])
+            community_sql = 'INSERT IGNORE INTO {} VALUES (%s,%s,%s,%s,%s)'.format(config.COMMUNITY_TABLE)
+            c.execute(community_sql,item[14:])
             self.conn.commit()
+        self.conn.close()
         print('所有连接已爬取完')
 
         '''

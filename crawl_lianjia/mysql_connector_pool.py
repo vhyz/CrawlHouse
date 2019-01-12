@@ -1,19 +1,19 @@
-import sqlite3
+import pymysql
 from queue import Queue
 import threading
+import config
 
 
-class Sqlite3Pool():
+class MysqlPool():
 
-    def __init__(self, db, init_count=10):
+    def __init__(self, init_count=15):
         self.conn_queue = Queue()
-        self.db = db
         self.lock = threading.Lock()
         for i in range(init_count):
             self.conn_queue.put(self.create_conn())
 
     def create_conn(self):
-        conn = sqlite3.connect(self.db, check_same_thread=False)
+        conn = pymysql.connect('localhost', config.MYSQL_NAME, config.MYSQL_PASSWORD, config.DATABASE_NAME)
         return conn
 
     def release(self):
@@ -32,5 +32,3 @@ class Sqlite3Pool():
 
     def free(self, conn):
         self.conn_queue.put(conn)
-
-

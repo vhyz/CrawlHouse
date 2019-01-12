@@ -4,7 +4,7 @@ from queue import Queue
 import logging
 import threading
 import report
-logging.basicConfig(filename='log.txt')
+import datetime
 
 
 def get_house_url():
@@ -28,7 +28,6 @@ def get_house_url():
         print('已找到{}个房子链接'.format(str(len(url_set))))
         data_process.insert_house_url_set(url_set)
 
-
 def main():
     '''
     爬虫程序分为几个部分
@@ -40,15 +39,20 @@ def main():
 
     运行程序只需要运行  run.py
     '''
+    data_process.drop()
 
+    nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
+    print(nowTime)
     data_process.create_table()
     get_house_url()
 
-    reprot_thread = report.RepoterThread()
-    reprot_thread.setDaemon(True)
-    reprot_thread.start()
+    report_thread = report.RepoterThread()
+    report_thread.setDaemon(True)
+    report_thread.start()
 
     print('数据库已有连接，开始爬取')
+    nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
+    print(nowTime)
     out_queue = Queue()
     out_thread = crawl.OutThread(out_queue)
     out_thread.start()
@@ -63,6 +67,8 @@ def main():
         thread.join()
 
     print('开始爬取图片')
+    nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
+    print(nowTime)
     thread_count = 15
     thread_list = list()
     for i in range(thread_count):
@@ -71,6 +77,10 @@ def main():
         thread.start()
     for thread in thread_list:
         thread.join()
+
+    print('爬取结束')
+    nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
+    print(nowTime)
 
     data_process.release()
 
