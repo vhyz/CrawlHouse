@@ -39,6 +39,8 @@ def main():
 
     运行程序只需要运行  run.py
     '''
+    data_process.drop()
+
     nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
     print(nowTime)
     data_process.create_table()

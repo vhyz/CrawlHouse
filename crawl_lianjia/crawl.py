@@ -11,7 +11,6 @@ import config
 import pymysql
 import logging
 
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.22 Safari/537.36 SE 2.X MetaSr 1.0'
 }
@@ -43,8 +42,8 @@ def crawl(url):
         res_list[1] = title
 
         # 房子总价
-        price_tag = soup.find('div',class_='price')
-        price = price_tag.find('span', class_='total').text + price_tag.find('span',class_='unit').text
+        price_tag = soup.find('div', class_='price')
+        price = price_tag.find('span', class_='total').text + price_tag.find('span', class_='unit').text
         res_list[2] = price
 
         # 房子关注人数
@@ -80,11 +79,13 @@ def crawl(url):
         res_list[7] = sell_info
 
         # 房子特色
+
         intro_info_list = soup.find('div', class_='showbasemore').find_all('div', recursive=False)
         intro_info = ''
-        for i in range(len(intro_info_list)):
+        for i in range(len(intro_info_list) - 2):
             div = intro_info_list[i].find_all('div')
-            intro_info += div[0].text + ' ' + div[1].text + '\n'
+            if len(div) >= 2:
+                intro_info += div[0].text + ' ' + div[1].text + '\n'
         res_list[8] = intro_info
 
         # 布局
@@ -138,7 +139,7 @@ def crawl(url):
         # 小区id
 
         community_url = soup.find('div', class_='communityName').find('a')['href']
-        community_id = community_url[8:len(community_url)-1]
+        community_id = community_url[8:len(community_url) - 1]
         res_list[14] = community_id
 
         r = requests.get(config.BASE_URL + community_url, headers=headers)
@@ -270,7 +271,7 @@ class OutThread(threading.Thread):
     def __init__(self, data_queue):
         threading.Thread.__init__(self)
         self.data_queue = data_queue
-        self.conn = pymysql.connect("localhost",config.MYSQL_NAME,config.MYSQL_PASSWORD,config.DATABASE_NAME)
+        self.conn = pymysql.connect("localhost", config.MYSQL_NAME, config.MYSQL_PASSWORD, config.DATABASE_NAME)
 
     def run(self):
         while True:
@@ -279,10 +280,11 @@ class OutThread(threading.Thread):
             except:
                 break
             c = self.conn.cursor()
-            house_sql = 'INSERT IGNORE INTO {} VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'.format(config.HOUSE_TABLE)
-            c.execute(house_sql,item[:15])
+            house_sql = 'INSERT IGNORE INTO {} VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'.format(
+                config.HOUSE_TABLE)
+            c.execute(house_sql, item[:15])
             community_sql = 'INSERT IGNORE INTO {} VALUES (%s,%s,%s,%s,%s)'.format(config.COMMUNITY_TABLE)
-            c.execute(community_sql,item[14:])
+            c.execute(community_sql, item[14:])
             self.conn.commit()
         self.conn.close()
         print('所有连接已爬取完')
