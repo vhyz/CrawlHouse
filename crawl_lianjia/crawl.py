@@ -20,8 +20,8 @@ headers = {
 def get_url_list(url):
     try:
         r = requests.get(url, headers=headers)
-    except Exception as e:
-        logging.error(traceback.print_exc())
+    except:
+        logging.error(traceback.format_exc())
     res = re.findall('<div class="title"><a class="" href="(.*?)" target', r.text, re.S)
     return res
 
@@ -166,7 +166,7 @@ def crawl(url):
 
 
     except:
-        logging.error(traceback.print_exc())
+        logging.error(traceback.format_exc())
     finally:
         return res_list, house_pic_list
 
@@ -213,7 +213,7 @@ class CrawlHouseUrlThread(threading.Thread):
             try:
                 r = requests.get(url, headers=headers)
             except Exception as e:
-                logging.error('爬取' + url + traceback.print_exc())
+                logging.error('爬取' + url + traceback.format_exc())
                 continue
             res = re.findall('page-data=\'{"totalPage":(.*?),"', r.text)
             if len(res) == 0:

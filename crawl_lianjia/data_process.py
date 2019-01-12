@@ -38,7 +38,7 @@ class DataProcess():
                 c.execute('delete from {} where id = '.format(self.url_table) + str(f[0]))
                 conn.commit()
             except:
-                logging.exception(traceback.print_exc())
+                logging.exception(traceback.format_exc())
             self.url_lock.release()
         self.pool.free(conn)
         return f[1]
@@ -59,7 +59,7 @@ class DataProcess():
                     c.execute('delete from {} where id = '.format(self.img_table) + str(f[i][0]))
                 conn.commit()
             except:
-                logging.exception(traceback.print_exc())
+                logging.exception(traceback.format_exc())
             self.img_lock.release()
         self.pool.free(conn)
         return f
@@ -79,7 +79,7 @@ class DataProcess():
                 c.execute(sql)
                 conn.commit()
             except:
-                logging.exception(traceback.print_exc())
+                logging.exception(traceback.format_exc())
             self.img_lock.release()
             self.pool.free(conn)
 
@@ -162,7 +162,7 @@ class DataProcess():
                     c.execute(sql)
                     conn.commit()
                 except:
-                    logging.exception(traceback.print_exc())
+                    logging.exception(traceback.format_exc())
                 url_list.clear()
         self.pool.free(conn)
 
