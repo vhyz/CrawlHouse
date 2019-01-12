@@ -20,6 +20,7 @@ def get_url_list(url):
     try:
         r = requests.get(url, headers=headers)
     except:
+        logging.error(url)
         logging.error(traceback.format_exc())
     res = re.findall('<div class="title"><a class="" href="(.*?)" target', r.text, re.S)
     return res
@@ -82,7 +83,7 @@ def crawl(url):
 
         intro_info_list = soup.find('div', class_='showbasemore').find_all('div', recursive=False)
         intro_info = ''
-        for i in range(len(intro_info_list) - 2):
+        for i in range(len(intro_info_list)):
             div = intro_info_list[i].find_all('div')
             if len(div) >= 2:
                 intro_info += div[0].text + ' ' + div[1].text + '\n'
@@ -151,22 +152,26 @@ def crawl(url):
             pass
 
         # 小区关注人数
-        follow_count = soup.find('div', class_='detailFollowedNum').span.text
-        res_list[16] = follow_count
+        follow_num_tag = soup.find('div', class_='detailFollowedNum')
+        if not follow_num_tag is None:
+            follow_count = follow_num_tag.span.text
+            res_list[16] = follow_count
 
+        # 小区平均价格
         info = soup.find('div', class_='xiaoquDescribe')
         price = info.find('div').div.span.text
-        # 小区品滚价格
         res_list[17] = price
+
+        # 小区信息
         community_info_tag_list = info.find('div', class_='xiaoquInfo').find_all('div')
         community_base_info = ''
         for tag in community_info_tag_list:
             community_base_info += tag.contents[0].text + ' ' + tag.contents[1].text + '\n'
-        # 小区信息
         res_list[18] = community_base_info
 
 
     except:
+        logging.error(url)
         logging.error(traceback.format_exc())
     finally:
         return res_list, house_pic_list
@@ -238,7 +243,6 @@ class CrawlHouseThread(threading.Thread):
             url = data_process.get_house_url()
             if url == '':
                 break
-            print(url)
             res, img_list = crawl(url)
             self.out_queue.put(res)
             if len(img_list) != 0:
