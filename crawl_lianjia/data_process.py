@@ -95,8 +95,26 @@ class DataProcess():
                                 favor_count VARCHAR(10),
                                 unit_price VARCHAR(20),
                                 location VARCHAR(50),
-                                base_info TEXT,
-                                sell_info TEXT,
+                                base_info_1 VARCHAR(15),
+                                base_info_2 VARCHAR(15),
+                                base_info_3 VARCHAR(10),
+                                base_info_4 VARCHAR(10),
+                                base_info_5 VARCHAR(10),
+                                base_info_6 VARCHAR(10),
+                                base_info_7 VARCHAR(10),
+                                base_info_8 VARCHAR(10),
+                                base_info_9 VARCHAR(10),
+                                base_info_10 VARCHAR(10),
+                                base_info_11 VARCHAR(10),
+                                base_info_12 VARCHAR(10),
+                                sell_info_1 VARCHAR(15),
+                                sell_info_2 VARCHAR(10),
+                                sell_info_3 VARCHAR(15),
+                                sell_info_4 VARCHAR(10),
+                                sell_info_5 VARCHAR(10),
+                                sell_info_6 VARCHAR(10),
+                                sell_info_7 VARCHAR(10),
+                                sell_info_8 VARCHAR(10),
                                 intro TEXT,
                                 layout TEXT,
                                 count_7 VARCHAR(10),
@@ -110,7 +128,14 @@ class DataProcess():
                                 community_name VARCHAR(20),
                                 favor_count VARCHAR(10),
                                 unit_price VARCHAR(20),
-                                info TEXT )
+                                build_time VARCHAR(10),
+                                buliding_type VARCHAR(30),
+                                property_fee VARCHAR(30),
+                                property_company VARCHAR(30),
+                                developer VARCHAR(30),
+                                building_count VARCHAR(10),
+                                house_count VARCHAR(10),
+                                nearby_stores VARCHAR(50) )
                               """.format(config.COMMUNITY_TABLE)
         c.execute(create_community_table_sql)
         c.execute(create_house_table_sql)
@@ -175,6 +200,7 @@ class DataProcess():
         c.execute('drop table {}'.format(self.url_table))
         conn.commit()
         self.pool.free(conn)
+
 
 data_process = DataProcess()
 get_house_url = data_process.get_house_url

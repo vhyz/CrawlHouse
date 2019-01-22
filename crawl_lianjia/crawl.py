@@ -11,6 +11,11 @@ import config
 import pymysql
 import logging
 
+# 删除北京基础信息的一条内容
+NEED_DELETE_BASE_INFO = False
+if config.URL == 'https://bj.lianjia.com/ershoufang/':
+    NEED_DELETE_BASE_INFO = True
+
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.22 Safari/537.36 SE 2.X MetaSr 1.0'
 }
@@ -27,7 +32,7 @@ def get_url_list(url):
 
 
 def crawl(url):
-    res_list = ['' for i in range(19)]
+    res_list = ['' for i in range(44)]
     house_pic_list = list()
 
     # 房子链接id
@@ -57,7 +62,7 @@ def crawl(url):
 
         # 小区名字
         community_name = soup.find('div', class_='communityName').find('a').text
-        res_list[15] = community_name
+        res_list[33] = community_name
 
         # 所处地区
         area_name = soup.find('div', class_='areaName').find('span', class_='info').text
@@ -66,18 +71,27 @@ def crawl(url):
         info = soup.find('div', class_='introContent')
         base_info_soup = info.find('div', class_='base').find('div', class_='content').ul.find_all('li')
 
-        base_info = ''
-        for item in base_info_soup:
-            base_info += item.contents[0].text + ' ' + item.contents[1] + '\n'
+        try:
+            # 基础属性
+            if NEED_DELETE_BASE_INFO:
+                base_info_soup.pop(10)
+            for i in range(12):
+                res_list[6+i] = base_info_soup[i].contents[1]
+        except:
+            pass
+
         sell_info_soup = info.find('div', class_='transaction').find('div', class_='content').ul.find_all('li')
-        sell_info = ''
-        for item in sell_info_soup:
-            span_list = item.find_all('span')
-            sell_info += span_list[0].text + ' ' + span_list[1].text + '\n'
-        # 基础属性
-        res_list[6] = base_info
-        # 交易属性
-        res_list[7] = sell_info
+
+        try:
+            # 交易属性
+            for i in range(8):
+                span_list =sell_info_soup[i].find_all('span')
+                string = span_list[1].text
+                if i == 6:
+                    string = string.replace(' ','')
+                res_list[18+i] = string
+        except:
+            pass
 
         # 房子特色
 
@@ -87,7 +101,7 @@ def crawl(url):
             div = intro_info_list[i].find_all('div')
             if len(div) >= 2:
                 intro_info += div[0].text + ' ' + div[1].text + '\n'
-        res_list[8] = intro_info
+        res_list[26] = intro_info
 
         # 布局
         layout_des = ''
@@ -100,7 +114,7 @@ def crawl(url):
                 layout_des += '\n'
         except:
             pass
-        res_list[9] = layout_des
+        res_list[27] = layout_des
 
         # 图片
         try:
@@ -115,13 +129,13 @@ def crawl(url):
         j = json.loads(r1.text)
         count_7 = j['data']['thisWeek']
         count_30 = j['data']['totalCnt']
-        res_list[10] = count_7
-        res_list[11] = count_30
+        res_list[28] = count_7
+        res_list[29] = count_30
 
         # 经纬度
         jingweidu = re.findall("resblockPosition:'(.*?)'", r.text)
         jingweidu = jingweidu[0]
-        res_list[12] = jingweidu
+        res_list[30] = jingweidu
 
         # 经纪人评论
         comment_data = {}
@@ -135,13 +149,12 @@ def crawl(url):
         if len(comment_dict['data']) != 0:
             for agent in comment_dict['data']['agentList']:
                 comment += agent['comment'] + '\n'
-        res_list[13] = comment
+        res_list[31] = comment
 
         # 小区id
-
         community_url = soup.find('div', class_='communityName').find('a')['href']
         community_id = community_url[8:len(community_url) - 1]
-        res_list[14] = community_id
+        res_list[32] = community_id
 
         r = requests.get(config.BASE_URL + community_url, headers=headers)
         soup = BeautifulSoup(r.text, 'lxml')
@@ -155,19 +168,25 @@ def crawl(url):
         follow_num_tag = soup.find('div', class_='detailFollowedNum')
         if not follow_num_tag is None:
             follow_count = follow_num_tag.span.text
-            res_list[16] = follow_count
+            res_list[34] = follow_count
 
         # 小区平均价格
-        info = soup.find('div', class_='xiaoquDescribe')
-        price = info.find('div').div.span.text
-        res_list[17] = price
+        try:
+            info = soup.find('div', class_='xiaoquDescribe')
+            price = info.find('div').div.span.text
+            res_list[35] = price
+        except:
+            pass
 
         # 小区信息
         community_info_tag_list = info.find('div', class_='xiaoquInfo').find_all('div')
-        community_base_info = ''
+        for i in range(8):
+            res_list[36 + i] = community_info_tag_list[i].contents[1].text
+        '''
         for tag in community_info_tag_list:
             community_base_info += tag.contents[0].text + ' ' + tag.contents[1].text + '\n'
         res_list[18] = community_base_info
+        '''
 
 
     except:
@@ -276,6 +295,14 @@ class OutThread(threading.Thread):
         threading.Thread.__init__(self)
         self.data_queue = data_queue
         self.conn = pymysql.connect("localhost", config.MYSQL_NAME, config.MYSQL_PASSWORD, config.DATABASE_NAME)
+        self.house_sql = 'INSERT IGNORE INTO {} VALUES (%s'.format(config.HOUSE_TABLE)
+        for i in range(32):
+            self.house_sql += ',%s'
+        self.house_sql += ')'
+        self.community_sql = 'INSERT IGNORE INTO {} VALUES (%s'.format(config.COMMUNITY_TABLE)
+        for i in range(11):
+            self.community_sql += ',%s'
+        self.community_sql += ')'
 
     def run(self):
         while True:
@@ -284,14 +311,11 @@ class OutThread(threading.Thread):
             except:
                 break
             c = self.conn.cursor()
-            house_sql = 'INSERT IGNORE INTO {} VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'.format(
-                config.HOUSE_TABLE)
-            c.execute(house_sql, item[:15])
-            community_sql = 'INSERT IGNORE INTO {} VALUES (%s,%s,%s,%s,%s)'.format(config.COMMUNITY_TABLE)
-            c.execute(community_sql, item[14:])
+            c.execute(self.house_sql, item[:33])
+            c.execute(self.community_sql, item[32:])
             self.conn.commit()
         self.conn.close()
-        print('所有连接已爬取完')
+        print('所有房子连接已爬取完')
 
         '''
             items = list()
