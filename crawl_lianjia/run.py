@@ -129,8 +129,7 @@ def run():
             config = config_list[0]
             print('开始爬取' + config)
             load(config,year_month)
-            # main()
-            time.sleep(5)
+            main()
             print('结束爬取' + config)
             config_list.pop(0)
             with open(file_name,'w')as f:
