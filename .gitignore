@@ -1,5 +1,6 @@
 # crawl_lianjia
-crawl_lianjia/config.json
+crawl_lianjia/*.json
+!crawl_lianjia/config.example.json
 __pycache__
 .idea
 crawl_lianjia/img
@@ -8,3 +9,5 @@ crawl_lianjia/test.py
 crawl_lianjia/out_data.py
 crawl_lianjia/house_data.csv
 crawl_lianjia/community_data.csv
+crawl_lianjia/config_list.json
+crawl_lianjia/data

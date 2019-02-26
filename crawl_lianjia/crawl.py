@@ -11,10 +11,6 @@ import config
 import pymysql
 import logging
 
-# 删除北京基础信息的一条内容
-NEED_DELETE_BASE_INFO = False
-if config.URL == 'https://bj.lianjia.com/ershoufang/':
-    NEED_DELETE_BASE_INFO = True
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.22 Safari/537.36 SE 2.X MetaSr 1.0'
@@ -73,7 +69,7 @@ def crawl(url):
 
         try:
             # 基础属性
-            if NEED_DELETE_BASE_INFO:
+            if config.URL[8:10] == 'bj':
                 base_info_soup.pop(10)
             for i in range(12):
                 res_list[6+i] = base_info_soup[i].contents[1]
@@ -253,29 +249,31 @@ class CrawlHouseUrlThread(threading.Thread):
 
 
 class CrawlHouseThread(threading.Thread):
-    def __init__(self, out_queue):
+    def __init__(self, out_queue, data_p):
         threading.Thread.__init__(self)
         self.out_queue = out_queue
+        self.data_process = data_p
 
     def run(self):
         while True:
-            url = data_process.get_house_url()
+            url = self.data_process.get_house_url()
             if url == '':
                 break
             res, img_list = crawl(url)
             self.out_queue.put(res)
             if len(img_list) != 0:
-                data_process.insert_img_url(img_list)
+                self.data_process.insert_img_url(img_list)
 
 
 class DownloadImgThread(threading.Thread):
-    def __init__(self):
+    def __init__(self, data_p):
         threading.Thread.__init__(self)
+        self.data_process = data_p
 
     def run(self):
         while True:
             try:
-                img_list = data_process.get_img_url()
+                img_list = self.data_process.get_img_url()
                 if len(img_list) == 0:
                     break
                 if not os.path.exists('img'):

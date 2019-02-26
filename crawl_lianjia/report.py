@@ -8,8 +8,10 @@ import data_process
 
 class RepoterThread(threading.Thread):
 
-    def __init__(self):
+    def __init__(self,data_p,is_end):
         threading.Thread.__init__(self)
+        self.data_process = data_p
+        self.is_end = is_end
         self.mail_host = "smtp.163.com"  # SMTP服务器
         self.mail_user = config.EMAIL_NAME  # 用户名
         self.mail_pass = config.EMAIL_PW  # 授权密码，非登录密码
@@ -34,10 +36,12 @@ class RepoterThread(threading.Thread):
         if not config.USE_REPORT:
             return
         while True:
+            if self.is_end[0]:
+                break
             content = '程序运行正常\n'
-            url_count = data_process.house_url_count()
-            img_count = data_process.img_url_count()
-            house_count,community_count = data_process.house_and_community_count()
+            url_count = self.data_process.house_url_count()
+            img_count = self.data_process.img_url_count()
+            house_count,community_count = self.data_process.house_and_community_count()
             content += 'url数量:' + str(url_count) + '\n'
             content += 'img数量:' + str(img_count) + '\n'
             content += 'house数量' + str(house_count) + '\n'

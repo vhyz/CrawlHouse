@@ -3,7 +3,6 @@ import traceback
 import logging
 import threading
 import config
-logging.basicConfig(filename='log.txt')
 
 
 class Img:
@@ -201,18 +200,5 @@ class DataProcess():
         conn.commit()
         self.pool.free(conn)
 
-
-data_process = DataProcess()
-get_house_url = data_process.get_house_url
-get_img_url = data_process.get_img
-insert_img_url = data_process.insert_img_url
-create_table = data_process.create_table
-house_url_count = data_process.house_url_count
-img_url_count = data_process.img_url_count
-insert_house_url_set = data_process.insert_house_url_set
-house_and_community_count = data_process.house_and_community_count
-drop = data_process.drop
-
-
-def release():
-    data_process.pool.release()
+    def release(self):
+        self.pool.release()

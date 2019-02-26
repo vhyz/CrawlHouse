@@ -2,17 +2,14 @@ import json
 import logging
 logging.basicConfig(filename='log.txt')
 
-
-with open('config.json')as f:
-    j = json.loads(f.read())
-    URL = j['url']
-    BASE_URL = URL[:len(URL) - 12]
-    HOUSE_TABLE = j['house_table']
-    COMMUNITY_TABLE = j['community_table']
-    MYSQL_NAME = j['mysql_name']
-    MYSQL_PASSWORD = j['mysql_password']
-    DATABASE_NAME = j['database_name']
-    USE_REPORT = j['use_email']
-    EMAIL_NAME = j['email_name']
-    EMAIL_PW = j['email_pw']
-    EMAIL_RECEIVER = j['email_receiver']
+URL = ''
+BASE_URL = ''
+HOUSE_TABLE = ''
+COMMUNITY_TABLE = ''
+MYSQL_NAME = ''
+MYSQL_PASSWORD = ''
+DATABASE_NAME = ''
+USE_REPORT = ''
+EMAIL_NAME = ''
+EMAIL_PW = ''
+EMAIL_RECEIVER = ''
