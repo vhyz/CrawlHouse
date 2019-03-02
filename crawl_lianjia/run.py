@@ -118,7 +118,7 @@ def run():
         os.mkdir('img')
     while True:
         time_object = time.localtime(time.time())
-        if time_object.tm_mday > 10:
+        if time_object.tm_mday < 10:
             time.sleep(3600)
             continue
         year_month = str(time_object.tm_year) + '_' + str(time_object.tm_mon)
