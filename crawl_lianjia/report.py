@@ -42,6 +42,7 @@ class RepoterThread(threading.Thread):
             url_count = self.data_process.house_url_count()
             img_count = self.data_process.img_url_count()
             house_count,community_count = self.data_process.house_and_community_count()
+            content += '爬取链接:' + config.URL + '\n'
             content += 'url数量:' + str(url_count) + '\n'
             content += 'img数量:' + str(img_count) + '\n'
             content += 'house数量' + str(house_count) + '\n'

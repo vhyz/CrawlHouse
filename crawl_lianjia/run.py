@@ -10,13 +10,14 @@ import time
 import os
 
 
-def load(confg,year_month):
-    with open(confg)as f:
+def load(config_name,year_month):
+    with open('config/' + config_name)as f:
         j = json.loads(f.read())
+        config.NAME = config_name[:len(config_name)-5]
         config.URL = j['url']
         config.BASE_URL = config.URL[:len(config.URL) - 12]
-        config.HOUSE_TABLE = j['house_table'] + year_month
-        config.COMMUNITY_TABLE = j['community_table'] + year_month
+        config.HOUSE_TABLE = j['house_table'] + '_' + year_month
+        config.COMMUNITY_TABLE = j['community_table'] + '_' + year_month
         config.MYSQL_NAME = j['mysql_name']
         config.MYSQL_PASSWORD = j['mysql_password']
         config.DATABASE_NAME = j['database_name']
@@ -68,7 +69,6 @@ def main():
     is_end = [False]
 
     report_thread = report.RepoterThread(data_p,is_end)
-    report_thread.setDaemon(True)
     report_thread.start()
 
     print('数据库已有连接，开始爬取')
@@ -78,10 +78,15 @@ def main():
     out_thread = crawl.OutThread(out_queue)
     out_thread.start()
 
+    id_list = []
+    path = 'img/' + config.NAME
+    if os.path.exists(path):
+        id_list = os.listdir(path)
+    id_set = set(id_list)
     thread_count = 15
     thread_list = list()
     for i in range(thread_count):
-        thread_list.append(crawl.CrawlHouseThread(out_queue,data_p))
+        thread_list.append(crawl.CrawlHouseThread(out_queue,data_p,id_set))
     for thread in thread_list:
         thread.start()
     for thread in thread_list:
@@ -99,7 +104,6 @@ def main():
     for thread in thread_list:
         thread.join()
 
-    print('爬取结束')
     nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
     print(nowTime)
 
@@ -108,16 +112,19 @@ def main():
 
 
 def run():
+    if not os.path.exists('data'):
+        os.mkdir('data')
+    if not os.path.exists('img'):
+        os.mkdir('img')
     while True:
         time_object = time.localtime(time.time())
-        if time_object.tm_mday < 10:
+        if time_object.tm_mday > 10:
             time.sleep(3600)
             continue
         year_month = str(time_object.tm_year) + '_' + str(time_object.tm_mon)
         file_name = 'data/'+year_month+'.json'
         if not os.path.exists(file_name):
-            with open('config_list.json')as f:
-                config_list = json.loads(f.read())
+            config_list = os.listdir('config')
             with open(file_name,'w')as f:
                 f.write(json.dumps(config_list))
         while True:

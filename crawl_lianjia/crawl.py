@@ -27,12 +27,15 @@ def get_url_list(url):
     return res
 
 
-def crawl(url):
+def crawl(url, id_set):
     res_list = ['' for i in range(44)]
     house_pic_list = list()
 
     # 房子链接id
     id = url[len(config.URL):len(url) - 5]
+    img_is_crawl = False
+    if id in id_set:
+        img_is_crawl = True
     res_list[0] = id
     res_list[14] = '0'
     try:
@@ -114,9 +117,10 @@ def crawl(url):
 
         # 图片
         try:
-            house_pic_tag_list = soup.find('div', class_='housePic').find_all('img')
-            for tag in house_pic_tag_list:
-                house_pic_list.append(data_process.Img(tag['src'], id, tag['alt']))
+            if not img_is_crawl:
+                house_pic_tag_list = soup.find('div', class_='housePic').find_all('img')
+                for tag in house_pic_tag_list:
+                    house_pic_list.append(data_process.Img(tag['src'], id, tag['alt']))
         except:
             pass
 
@@ -155,8 +159,9 @@ def crawl(url):
         r = requests.get(config.BASE_URL + community_url, headers=headers)
         soup = BeautifulSoup(r.text, 'lxml')
         try:
-            community_img = soup.find('ol', id='overviewThumbnail').find_all('li')[0].img['src']
-            house_pic_list.append(data_process.Img(community_img, id, '小区'))
+            if not img_is_crawl:
+                community_img = soup.find('ol', id='overviewThumbnail').find_all('li')[0].img['src']
+                house_pic_list.append(data_process.Img(community_img, id, '小区'))
         except:
             pass
 
@@ -249,17 +254,18 @@ class CrawlHouseUrlThread(threading.Thread):
 
 
 class CrawlHouseThread(threading.Thread):
-    def __init__(self, out_queue, data_p):
+    def __init__(self, out_queue, data_p, id_set):
         threading.Thread.__init__(self)
         self.out_queue = out_queue
         self.data_process = data_p
+        self.id_set = id_set
 
     def run(self):
         while True:
             url = self.data_process.get_house_url()
             if url == '':
                 break
-            res, img_list = crawl(url)
+            res, img_list = crawl(url,self.id_set)
             self.out_queue.put(res)
             if len(img_list) != 0:
                 self.data_process.insert_img_url(img_list)
@@ -269,17 +275,18 @@ class DownloadImgThread(threading.Thread):
     def __init__(self, data_p):
         threading.Thread.__init__(self)
         self.data_process = data_p
+        self.dir = 'img/' + config.NAME + '/'
+        if not os.path.exists(self.dir):
+            os.mkdir(self.dir)
 
     def run(self):
         while True:
             try:
-                img_list = self.data_process.get_img_url()
+                img_list = self.data_process.get_img()
                 if len(img_list) == 0:
                     break
-                if not os.path.exists('img'):
-                    os.mkdir('img')
                 for img in img_list:
-                    dir = 'img/' + str(img[2])
+                    dir = self.dir + str(img[2])
                     if not os.path.exists(dir):
                         os.makedirs(dir)
                     wget.download(img[1], dir + '/' + img[3])

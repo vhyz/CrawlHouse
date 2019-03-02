@@ -1,7 +1,7 @@
 # crawl_lianjia
 crawl_lianjia/*.json
 !crawl_lianjia/config.example.json
-!crawl_lianjia/config_list.example.json
+crawl_lianjia/config/*
 __pycache__
 .idea
 crawl_lianjia/img

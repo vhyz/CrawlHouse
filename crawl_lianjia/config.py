@@ -2,6 +2,7 @@ import json
 import logging
 logging.basicConfig(filename='log.txt')
 
+NAME = ''
 URL = ''
 BASE_URL = ''
 HOUSE_TABLE = ''
