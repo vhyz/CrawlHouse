@@ -22,6 +22,7 @@ def get_url_list(url):
     except:
         logging.error(url)
         logging.error(traceback.format_exc())
+        return []
     res = re.findall('<div class="title"><a class="" href="(.*?)" target', r.text, re.S)
     return res
 
@@ -124,7 +125,7 @@ def crawl(url, id_set):
             pass
 
         # 代看人数
-        r1 = requests.get(config.URL + 'houseseerecord', params={'id': id}, headers=headers,timeout=10)
+        r1 = requests.get(config.URL + 'houseseerecord', params={'id': id}, headers=headers,timeout=20)
         j = json.loads(r1.text)
         count_7 = j['data']['thisWeek']
         count_30 = j['data']['totalCnt']
@@ -142,7 +143,7 @@ def crawl(url, id_set):
         comment_data['page'] = 1
         comment_data['order'] = 0
         comment_data['id'] = id
-        comment_r = requests.get(config.URL + 'showcomment', headers=headers, params=comment_data,timeout=10)
+        comment_r = requests.get(config.URL + 'showcomment', headers=headers, params=comment_data,timeout=20)
         comment_dict = json.loads(comment_r.text)
         comment = ''
         if len(comment_dict['data']) != 0:
@@ -155,33 +156,34 @@ def crawl(url, id_set):
         community_id = community_url[8:len(community_url) - 1]
         res_list[32] = community_id
 
-        r = requests.get(config.BASE_URL + community_url, headers=headers,timeout=10)
-        soup = BeautifulSoup(r.text, 'lxml')
-        try:
-            if not img_is_crawl:
-                community_img = soup.find('ol', id='overviewThumbnail').find_all('li')[0].img['src']
-                house_pic_list.append(data_process.Img(community_img, id, '小区'))
-        except:
-            pass
+        r = requests.get(config.BASE_URL + community_url, headers=headers,timeout=20)
+        if r.url != config.BASE_URL + '/xiaoqu/':
+            soup = BeautifulSoup(r.text, 'lxml')
+            try:
+                if not img_is_crawl:
+                    community_img = soup.find('ol', id='overviewThumbnail').find_all('li')[0].img['src']
+                    house_pic_list.append(data_process.Img(community_img, id, '小区'))
+            except:
+                pass
 
-        # 小区关注人数
-        follow_num_tag = soup.find('div', class_='detailFollowedNum')
-        if not follow_num_tag is None:
-            follow_count = follow_num_tag.span.text
-            res_list[34] = follow_count
+            # 小区关注人数
+            follow_num_tag = soup.find('div', class_='detailFollowedNum')
+            if not follow_num_tag is None:
+                follow_count = follow_num_tag.span.text
+                res_list[34] = follow_count
 
-        # 小区平均价格
-        try:
-            info = soup.find('div', class_='xiaoquDescribe')
-            price = info.find('div').div.span.text
-            res_list[35] = price
-        except:
-            pass
+            # 小区平均价格
+            try:
+                info = soup.find('div', class_='xiaoquDescribe')
+                price = info.find('div').div.span.text
+                res_list[35] = price
+            except:
+                pass
 
-        # 小区信息
-        community_info_tag_list = info.find('div', class_='xiaoquInfo').find_all('div')
-        for i in range(8):
-            res_list[36 + i] = community_info_tag_list[i].contents[1].text
+            # 小区信息
+            community_info_tag_list = info.find('div', class_='xiaoquInfo').find_all('div')
+            for i in range(8):
+                res_list[36 + i] = community_info_tag_list[i].contents[1].text
         '''
         for tag in community_info_tag_list:
             community_base_info += tag.contents[0].text + ' ' + tag.contents[1].text + '\n'
