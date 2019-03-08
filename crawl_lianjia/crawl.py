@@ -5,7 +5,6 @@ import os
 import json
 import data_process
 import threading
-import wget
 import traceback
 import config
 import pymysql
@@ -19,7 +18,7 @@ headers = {
 
 def get_url_list(url):
     try:
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers,timeout=30)
     except:
         logging.error(url)
         logging.error(traceback.format_exc())
@@ -39,7 +38,7 @@ def crawl(url, id_set):
     res_list[0] = id
     res_list[14] = '0'
     try:
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers,timeout=30)
         soup = BeautifulSoup(r.text, 'lxml')
 
         # 房子标题
@@ -125,7 +124,7 @@ def crawl(url, id_set):
             pass
 
         # 代看人数
-        r1 = requests.get(config.URL + 'houseseerecord', params={'id': id}, headers=headers)
+        r1 = requests.get(config.URL + 'houseseerecord', params={'id': id}, headers=headers,timeout=10)
         j = json.loads(r1.text)
         count_7 = j['data']['thisWeek']
         count_30 = j['data']['totalCnt']
@@ -143,7 +142,7 @@ def crawl(url, id_set):
         comment_data['page'] = 1
         comment_data['order'] = 0
         comment_data['id'] = id
-        comment_r = requests.get(config.URL + 'showcomment', headers=headers, params=comment_data)
+        comment_r = requests.get(config.URL + 'showcomment', headers=headers, params=comment_data,timeout=10)
         comment_dict = json.loads(comment_r.text)
         comment = ''
         if len(comment_dict['data']) != 0:
@@ -156,7 +155,7 @@ def crawl(url, id_set):
         community_id = community_url[8:len(community_url) - 1]
         res_list[32] = community_id
 
-        r = requests.get(config.BASE_URL + community_url, headers=headers)
+        r = requests.get(config.BASE_URL + community_url, headers=headers,timeout=10)
         soup = BeautifulSoup(r.text, 'lxml')
         try:
             if not img_is_crawl:
@@ -275,23 +274,25 @@ class DownloadImgThread(threading.Thread):
     def __init__(self, data_p):
         threading.Thread.__init__(self)
         self.data_process = data_p
-        self.dir = 'img/' + config.NAME + '/'
+        self.dir = config.IMG_DIR + config.NAME + '/'
         if not os.path.exists(self.dir):
             os.mkdir(self.dir)
 
     def run(self):
         while True:
-            try:
-                img_list = self.data_process.get_img()
-                if len(img_list) == 0:
-                    break
-                for img in img_list:
+            img_list = self.data_process.get_img()
+            if len(img_list) == 0:
+                break
+            for img in img_list:
+                try:
                     dir = self.dir + str(img[2])
                     if not os.path.exists(dir):
                         os.makedirs(dir)
-                    wget.download(img[1], dir + '/' + img[3])
-            except:
-                continue
+                    r = requests.get(img[1],headers=headers,timeout=20)
+                    with open(dir + '/' + img[3],'wb')as f:
+                        f.write(r.content)
+                except:
+                    logging.error(traceback.format_exc())
 
 
 class OutThread(threading.Thread):

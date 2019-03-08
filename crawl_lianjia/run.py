@@ -10,6 +10,11 @@ import time
 import os
 
 
+def print_msg(msg):
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(now + ': ' + msg)
+
+
 def load(config_name,year_month):
     with open('config/' + config_name)as f:
         j = json.loads(f.read())
@@ -29,9 +34,9 @@ def load(config_name,year_month):
 
 def get_house_url(data_p):
     if data_p.house_url_count() == 0 and data_p.img_url_count() == 0:
-        print('数据库无可爬连接，开始收集连接')
+        print_msg('数据库无可爬连接，开始收集连接')
         href_list = crawl.get_small_region_list()
-        print('已找到{}个小地点'.format(str(len(href_list))))
+        print_msg('已找到{}个小地点'.format(str(len(href_list))))
         lock_set = threading.Lock()
         href_queue = Queue()
         for href in href_list:
@@ -45,7 +50,7 @@ def get_house_url(data_p):
             thread.start()
         for thread in thread_list:
             thread.join()
-        print('已找到{}个房子链接'.format(str(len(url_set))))
+        print_msg('已找到{}个房子链接'.format(str(len(url_set))))
         data_p.insert_house_url_set(url_set)
 
 
@@ -61,25 +66,23 @@ def main():
     运行程序只需要运行  run.py
     '''
     data_p = data_process.DataProcess()
-    nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
-    print(nowTime)
     data_p.create_table()
     get_house_url(data_p)
 
+    # 邮件线程
     is_end = [False]
-
     report_thread = report.RepoterThread(data_p,is_end)
     report_thread.start()
 
-    print('数据库已有连接，开始爬取')
-    nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
-    print(nowTime)
+    # 开始爬取二手房信息
+    print_msg('数据库已有连接，开始爬取')
+
     out_queue = Queue()
     out_thread = crawl.OutThread(out_queue)
     out_thread.start()
 
     id_list = []
-    path = 'img/' + config.NAME
+    path = config.IMG_DIR + config.NAME
     if os.path.exists(path):
         id_list = os.listdir(path)
     id_set = set(id_list)
@@ -92,10 +95,9 @@ def main():
     for thread in thread_list:
         thread.join()
 
-    print('开始爬取图片')
-    nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
-    print(nowTime)
-    thread_count = 15
+    # 爬取图片
+    print_msg('开始爬取图片')
+    thread_count = 7
     thread_list = list()
     for i in range(thread_count):
         thread_list.append(crawl.DownloadImgThread(data_p))
@@ -104,9 +106,6 @@ def main():
     for thread in thread_list:
         thread.join()
 
-    nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 现在
-    print(nowTime)
-
     is_end[0] = True
     data_p.release()
 
@@ -114,13 +113,10 @@ def main():
 def run():
     if not os.path.exists('data'):
         os.mkdir('data')
-    if not os.path.exists('img'):
-        os.mkdir('img')
+    if not os.path.exists(config.IMG_DIR):
+        os.mkdir(config.IMG_DIR)
     while True:
         time_object = time.localtime(time.time())
-        if time_object.tm_mday < 10:
-            time.sleep(3600)
-            continue
         year_month = str(time_object.tm_year) + '_' + str(time_object.tm_mon)
         file_name = 'data/'+year_month+'.json'
         if not os.path.exists(file_name):
@@ -133,11 +129,11 @@ def run():
             if len(config_list) == 0:
                 time.sleep(3600)
                 break
-            config = config_list[0]
-            print('开始爬取' + config)
-            load(config,year_month)
+            config_name = config_list[0]
+            print_msg('开始爬取 ' + config_name)
+            load(config_name,year_month)
             main()
-            print('结束爬取' + config)
+            print_msg('结束爬取 ' + config_name)
             config_list.pop(0)
             with open(file_name,'w')as f:
                 f.write(json.dumps(config_list))
