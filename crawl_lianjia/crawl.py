@@ -27,7 +27,7 @@ def get_url_list(url):
     return res
 
 
-def crawl(url, id_set):
+def crawl(url):
     res_list = ['' for i in range(44)]
     house_pic_list = list()
 
@@ -252,18 +252,17 @@ class CrawlHouseUrlThread(threading.Thread):
 
 
 class CrawlHouseThread(threading.Thread):
-    def __init__(self, out_queue, data_p, id_set):
+    def __init__(self, out_queue, data_p):
         threading.Thread.__init__(self)
         self.out_queue = out_queue
         self.data_process = data_p
-        self.id_set = id_set
 
     def run(self):
         while True:
             url = self.data_process.get_house_url()
             if url == '':
                 break
-            res, img_list = crawl(url,self.id_set)
+            res, img_list = crawl(url)
             self.out_queue.put(res)
             if len(img_list) != 0:
                 self.data_process.insert_img_url(img_list)

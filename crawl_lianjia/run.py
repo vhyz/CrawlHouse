@@ -81,15 +81,10 @@ def main():
     out_thread = crawl.OutThread(out_queue)
     out_thread.start()
 
-    id_list = []
-    path = config.IMG_DIR + config.NAME
-    if os.path.exists(path):
-        id_list = os.listdir(path)
-    id_set = set(id_list)
     thread_count = 15
     thread_list = list()
     for i in range(thread_count):
-        thread_list.append(crawl.CrawlHouseThread(out_queue,data_p,id_set))
+        thread_list.append(crawl.CrawlHouseThread(out_queue,data_p))
     for thread in thread_list:
         thread.start()
     for thread in thread_list:
