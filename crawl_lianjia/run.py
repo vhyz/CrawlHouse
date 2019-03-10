@@ -97,7 +97,7 @@ def main():
 
     # 爬取图片
     print_msg('开始爬取图片')
-    thread_count = 30
+    thread_count = 18
     thread_list = list()
     for i in range(thread_count):
         thread_list.append(crawl.DownloadImgThread(data_p))

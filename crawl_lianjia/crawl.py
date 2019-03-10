@@ -33,9 +33,6 @@ def crawl(url, id_set):
 
     # 房子链接id
     id = url[len(config.URL):len(url) - 5]
-    img_is_crawl = False
-    if id in id_set:
-        img_is_crawl = True
     res_list[0] = id
     res_list[14] = '0'
     try:
@@ -117,10 +114,9 @@ def crawl(url, id_set):
 
         # 图片
         try:
-            if not img_is_crawl:
-                house_pic_tag_list = soup.find('div', class_='housePic').find_all('img')
-                for tag in house_pic_tag_list:
-                    house_pic_list.append(data_process.Img(tag['src'], id, tag['alt']))
+            house_pic_tag_list = soup.find('div', class_='housePic').find_all('img')
+            for tag in house_pic_tag_list:
+                house_pic_list.append(data_process.Img(tag['src'], id, tag['alt']))
         except:
             pass
 
@@ -160,9 +156,8 @@ def crawl(url, id_set):
         if r.url != config.BASE_URL + '/xiaoqu/':
             soup = BeautifulSoup(r.text, 'lxml')
             try:
-                if not img_is_crawl:
-                    community_img = soup.find('ol', id='overviewThumbnail').find_all('li')[0].img['src']
-                    house_pic_list.append(data_process.Img(community_img, id, '小区'))
+                community_img = soup.find('ol', id='overviewThumbnail').find_all('li')[0].img['src']
+                house_pic_list.append(data_process.Img(community_img, id, '小区'))
             except:
                 pass
 
@@ -295,7 +290,7 @@ class DownloadImgThread(threading.Thread):
                     file_path = dir + '/' + img[3]
                     if os.path.exists(file_path):
                         continue
-                    r = requests.get(img[1],headers=headers,timeout=20)
+                    r = requests.get(img[1],headers=headers,timeout=30)
                     with open(file_path,'wb')as f:
                         f.write(r.content)
                 except:
