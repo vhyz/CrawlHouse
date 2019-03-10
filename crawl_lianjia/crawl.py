@@ -18,7 +18,7 @@ headers = {
 
 def get_url_list(url):
     try:
-        r = requests.get(url, headers=headers,timeout=30)
+        r = requests.get(url, headers=headers,timeout=60)
     except:
         logging.error(url)
         logging.error(traceback.format_exc())
@@ -156,7 +156,7 @@ def crawl(url, id_set):
         community_id = community_url[8:len(community_url) - 1]
         res_list[32] = community_id
 
-        r = requests.get(config.BASE_URL + community_url, headers=headers,timeout=20)
+        r = requests.get(config.BASE_URL + community_url, headers=headers,timeout=30)
         if r.url != config.BASE_URL + '/xiaoqu/':
             soup = BeautifulSoup(r.text, 'lxml')
             try:
@@ -184,11 +184,6 @@ def crawl(url, id_set):
             community_info_tag_list = info.find('div', class_='xiaoquInfo').find_all('div')
             for i in range(8):
                 res_list[36 + i] = community_info_tag_list[i].contents[1].text
-        '''
-        for tag in community_info_tag_list:
-            community_base_info += tag.contents[0].text + ' ' + tag.contents[1].text + '\n'
-        res_list[18] = community_base_info
-        '''
 
 
     except:
@@ -199,28 +194,35 @@ def crawl(url, id_set):
 
 
 def get_small_region_list():
-    r = requests.get(config.URL, headers=headers)
-    big_region_list = []
-    soup = BeautifulSoup(r.text, 'lxml')
-    a_list = soup.find('div', class_='position').find_all('dl')[1].dd.find('div').find_all('a')
+    while True:
+        try:
+            r = requests.get(config.URL, headers=headers)
+            big_region_list = []
+            soup = BeautifulSoup(r.text, 'lxml')
+            a_list = soup.find('div', class_='position').find_all('dl')[1].dd.find('div').find_all('a')
 
-    length = len(a_list)
-    # 北京二手房有两个链接并非北京的，去掉 2 个
-    if config.URL == 'https://bj.lianjia.com/ershoufang/':
-        length -= 2
+            length = len(a_list)
+            # 北京二手房有两个链接并非北京的，去掉 2 个
+            if config.URL == 'https://bj.lianjia.com/ershoufang/':
+                length -= 2
 
-    for i in range(length):
-        big_region_list.append(a_list[i]['href'])
-    small_region = set()
-    for big_region in big_region_list:
-        r = requests.get(config.BASE_URL + big_region, headers=headers)
-        soup = BeautifulSoup(r.text, 'lxml')
-        a_list = soup.find('div', class_='position').find_all('dl')[1].dd.find('div').find_all('div')[1].find_all('a')
-        for a in a_list:
-            if not a['href'] in big_region_list:
-                small_region.add(a['href'])
-    small_region_list = list(small_region)
-    return small_region_list
+            for i in range(length):
+                big_region_list.append(a_list[i]['href'])
+            small_region = set()
+            for big_region in big_region_list:
+                r = requests.get(config.BASE_URL + big_region, headers=headers)
+                soup = BeautifulSoup(r.text, 'lxml')
+                a_list = soup.find('div', class_='position').find_all('dl')[1].dd.find('div').find_all('div')[1].find_all('a')
+                for a in a_list:
+                    if not a['href'] in big_region_list:
+                        small_region.add(a['href'])
+            small_region_list = list(small_region)
+            return small_region_list
+        except Exception as e:
+            exp_msg = traceback.format_exc()
+            print(exp_msg)
+            logging.error(exp_msg)
+
 
 
 class CrawlHouseUrlThread(threading.Thread):
@@ -290,8 +292,11 @@ class DownloadImgThread(threading.Thread):
                     dir = self.dir + str(img[2])
                     if not os.path.exists(dir):
                         os.makedirs(dir)
+                    file_path = dir + '/' + img[3]
+                    if os.path.exists(file_path):
+                        continue
                     r = requests.get(img[1],headers=headers,timeout=20)
-                    with open(dir + '/' + img[3],'wb')as f:
+                    with open(file_path,'wb')as f:
                         f.write(r.content)
                 except:
                     logging.error(traceback.format_exc())

@@ -43,7 +43,7 @@ def get_house_url(data_p):
             href_queue.put(href)
         url_set = set()
         thread_list = list()
-        thread_count = 15
+        thread_count = 8
         for i in range(thread_count):
             thread_list.append(crawl.CrawlHouseUrlThread(href_queue, url_set, lock_set))
         for thread in thread_list:
@@ -97,7 +97,7 @@ def main():
 
     # 爬取图片
     print_msg('开始爬取图片')
-    thread_count = 7
+    thread_count = 30
     thread_list = list()
     for i in range(thread_count):
         thread_list.append(crawl.DownloadImgThread(data_p))
