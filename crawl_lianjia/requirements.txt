@@ -1,5 +1,5 @@
-beautifulsoup4==4.6.0
-lxml==4.2.1
-requests==2.21.0
-wget==3.2
-PyMySQL==0.9.2
+beautifulsoup4
+lxml
+requests
+wget
+PyMySQL

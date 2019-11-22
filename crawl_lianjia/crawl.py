@@ -10,7 +10,6 @@ import config
 import pymysql
 import logging
 
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.22 Safari/537.36 SE 2.X MetaSr 1.0'
 }
@@ -18,7 +17,7 @@ headers = {
 
 def get_url_list(url):
     try:
-        r = requests.get(url, headers=headers,timeout=60)
+        r = requests.get(url, headers=headers, timeout=60)
     except:
         logging.error(url)
         logging.error(traceback.format_exc())
@@ -36,7 +35,7 @@ def crawl(url):
     res_list[0] = id
     res_list[14] = '0'
     try:
-        r = requests.get(url, headers=headers,timeout=30)
+        r = requests.get(url, headers=headers, timeout=30)
         soup = BeautifulSoup(r.text, 'lxml')
 
         # 房子标题
@@ -72,7 +71,7 @@ def crawl(url):
             if config.URL[8:10] == 'bj':
                 base_info_soup.pop(10)
             for i in range(12):
-                res_list[6+i] = base_info_soup[i].contents[1]
+                res_list[6 + i] = base_info_soup[i].contents[1]
         except:
             pass
 
@@ -81,11 +80,11 @@ def crawl(url):
         try:
             # 交易属性
             for i in range(8):
-                span_list =sell_info_soup[i].find_all('span')
+                span_list = sell_info_soup[i].find_all('span')
                 string = span_list[1].text
                 if i == 6:
-                    string = string.replace(' ','')
-                res_list[18+i] = string
+                    string = string.replace(' ', '')
+                res_list[18 + i] = string
         except:
             pass
 
@@ -121,7 +120,7 @@ def crawl(url):
             pass
 
         # 代看人数
-        r1 = requests.get(config.URL + 'houseseerecord', params={'id': id}, headers=headers,timeout=20)
+        r1 = requests.get(config.URL + 'houseseerecord', params={'id': id}, headers=headers, timeout=20)
         j = json.loads(r1.text)
         count_7 = j['data']['thisWeek']
         count_30 = j['data']['totalCnt']
@@ -139,7 +138,7 @@ def crawl(url):
         comment_data['page'] = 1
         comment_data['order'] = 0
         comment_data['id'] = id
-        comment_r = requests.get(config.URL + 'showcomment', headers=headers, params=comment_data,timeout=20)
+        comment_r = requests.get(config.URL + 'showcomment', headers=headers, params=comment_data, timeout=20)
         comment_dict = json.loads(comment_r.text)
         comment = ''
         if len(comment_dict['data']) != 0:
@@ -152,7 +151,7 @@ def crawl(url):
         community_id = community_url[8:len(community_url) - 1]
         res_list[32] = community_id
 
-        r = requests.get(config.BASE_URL + community_url, headers=headers,timeout=30)
+        r = requests.get(config.BASE_URL + community_url, headers=headers, timeout=30)
         if r.url != config.BASE_URL + '/xiaoqu/':
             soup = BeautifulSoup(r.text, 'lxml')
             try:
@@ -197,9 +196,6 @@ def get_small_region_list():
             a_list = soup.find('div', class_='position').find_all('dl')[1].dd.find('div').find_all('a')
 
             length = len(a_list)
-            # 北京二手房有两个链接并非北京的，去掉 2 个
-            if config.URL == 'https://bj.lianjia.com/ershoufang/':
-                length -= 2
 
             for i in range(length):
                 big_region_list.append(a_list[i]['href'])
@@ -207,7 +203,10 @@ def get_small_region_list():
             for big_region in big_region_list:
                 r = requests.get(config.BASE_URL + big_region, headers=headers)
                 soup = BeautifulSoup(r.text, 'lxml')
-                a_list = soup.find('div', class_='position').find_all('dl')[1].dd.find('div').find_all('div')[1].find_all('a')
+                a_list_tag = soup.find('div', class_='position').find_all('dl')[1].dd.find('div').find_all('div')
+                if len(a_list_tag) == 1:
+                    continue
+                a_list = a_list_tag[1].find_all('a')
                 for a in a_list:
                     if not a['href'] in big_region_list:
                         small_region.add(a['href'])
@@ -217,7 +216,6 @@ def get_small_region_list():
             exp_msg = traceback.format_exc()
             print(exp_msg)
             logging.error(exp_msg)
-
 
 
 class CrawlHouseUrlThread(threading.Thread):
@@ -235,7 +233,7 @@ class CrawlHouseUrlThread(threading.Thread):
                 break
             url = config.BASE_URL + small_region
             try:
-                r = requests.get(url, headers=headers)
+                r = requests.get(url, headers=headers, timeout=60)
             except Exception as e:
                 logging.error('爬取' + url + traceback.format_exc())
                 continue
@@ -289,8 +287,8 @@ class DownloadImgThread(threading.Thread):
                     file_path = dir + '/' + img[3]
                     if os.path.exists(file_path):
                         continue
-                    r = requests.get(img[1],headers=headers,timeout=30)
-                    with open(file_path,'wb')as f:
+                    r = requests.get(img[1], headers=headers, timeout=30)
+                    with open(file_path, 'wb')as f:
                         f.write(r.content)
                 except:
                     logging.error(traceback.format_exc())

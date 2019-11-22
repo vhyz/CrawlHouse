@@ -43,7 +43,7 @@ def get_house_url(data_p):
             href_queue.put(href)
         url_set = set()
         thread_list = list()
-        thread_count = 8
+        thread_count = 5
         for i in range(thread_count):
             thread_list.append(crawl.CrawlHouseUrlThread(href_queue, url_set, lock_set))
         for thread in thread_list:
@@ -73,6 +73,7 @@ def main():
     is_end = [False]
     report_thread = report.RepoterThread(data_p,is_end)
     report_thread.start()
+
 
     # 开始爬取二手房信息
     print_msg('数据库已有连接，开始爬取')
